@@ -1,5 +1,4 @@
 #include <iostream>
-#include <fstream>
 #include <vector>
 #include <map>
 #include <string>
@@ -80,14 +79,6 @@ public:
         }
         cout << "Grade: " << grade << endl;
     }
-
-    // File persistence
-    void saveToFile(const string& filename) const {
-        ofstream outFile(filename, ios::app);
-        if (!outFile) throw runtime_error("Unable to open file for writing.");
-        outFile << id << "," << name << "," << grade << endl;
-        outFile.close();
-    }
 };
 
 // Function template to display a list of objects
@@ -125,19 +116,11 @@ int main() {
         utils::printLine('=', 50);
         displayList(people);
 
-        // Save to file
-        for (const auto& person : people) {
-            auto student = dynamic_pointer_cast<Student>(person);
-            if (student) {
-                student->saveToFile("students.txt");
-            }
-        }
-
-        cout << "Data saved to students.txt\n";
-
     } catch (const exception& e) {
         cerr << "Error: " << e.what() << endl;
     }
 
     return 0;
 }
+
+
