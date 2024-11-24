@@ -1,126 +1,149 @@
 #include <iostream>
-#include <vector>
-#include <map>
 #include <string>
-#include <iomanip>
-#include <memory> // For smart pointers
-#include <exception>
 using namespace std;
 
 // Namespace for utility functions
-namespace utils {
-    void printLine(char ch = '-', int width = 50) {
+namespace utils
+{
+    void printLine(char ch = '-', int width = 50)
+    {
         cout << string(width, ch) << endl;
     }
 }
 
 // Abstract Base Class
-class Person {
+class Person
+{
 protected:
-    int id;
-    string name;
+    int id;      // Unique ID for each person
+    string name; // Name of the person
 
 public:
-    Person(int id, const string& name) : id(id), name(name) {}
+    // Constructor for Person
+    Person(int id, const string &name) : id(id), name(name) {}
+
+    // Virtual destructor to ensure proper cleanup in derived classes
     virtual ~Person() = default;
 
-    virtual void displayInfo() const = 0; // Pure virtual function
+    // Pure virtual function to be overridden by derived classes
+    virtual void displayInfo() const = 0;
+
+    // Virtual function to add marks, default does nothing
+    virtual void addMarks(int math, int science)
+    {
+        cout << "This operation is not supported for this person type.\n";
+    }
 };
 
 // Derived Class - Student
-class Student : public Person {
+class Student : public Person
+{
 private:
-    map<string, int> marks;
-    char grade;
+    int mathScore;    // Math score for the student
+    int scienceScore; // Science score for the student
+    char grade;       // Grade calculated based on scores
 
-    void calculateGrade() {
-        if (marks.empty()) {
+    // Private function to calculate the grade based on scores
+    void calculateGrade()
+    {
+        if (mathScore == -1 && scienceScore == -1)
+        {
             grade = 'N'; // No grade available
             return;
         }
 
-        int totalMarks = 0;
-        for (const auto& subject : marks) {
-            totalMarks += subject.second;
+        float average = 0;
+        int count = 0;
+
+        if (mathScore != -1)
+        {
+            average += mathScore;
+            count++;
         }
 
-        float average = static_cast<float>(totalMarks) / marks.size();
+        if (scienceScore != -1)
+        {
+            average += scienceScore;
+            count++;
+        }
 
-        if (average >= 90) grade = 'A';
-        else if (average >= 80) grade = 'B';
-        else if (average >= 70) grade = 'C';
-        else if (average >= 60) grade = 'D';
-        else grade = 'F';
+        average /= count;
+
+        if (average >= 90)
+            grade = 'A';
+        else if (average >= 80)
+            grade = 'B';
+        else if (average >= 70)
+            grade = 'C';
+        else if (average >= 60)
+            grade = 'D';
+        else
+            grade = 'F';
     }
 
 public:
-    // Constructors
-    Student(int id, const string& name) : Person(id, name), grade('N') {}
+    // Constructor for Student
+    Student(int id, const string &name)
+        : Person(id, name), mathScore(-1), scienceScore(-1), grade('N') {}
 
-    // Adding marks
-    void addMarks(const string& subject, int score) {
-        if (score < 0 || score > 100) throw invalid_argument("Invalid score! Must be between 0 and 100.");
-        marks[subject] = score;
-        calculateGrade();
-    }
-
-    // Operator overloading for comparison
-    bool operator<(const Student& other) const {
-        return grade < other.grade;
+    // Overridden function to add marks for the student
+    void addMarks(int math, int science) override
+    {
+        if (math < 0 || math > 100 || science < 0 || science > 100)
+        {
+            throw invalid_argument("Invalid score! Must be between 0 and 100.");
+        }
+        mathScore = math;
+        scienceScore = science;
+        calculateGrade(); // Update grade after adding marks
     }
 
     // Overridden function to display student info
-    void displayInfo() const override {
+    void displayInfo() const override
+    {
         cout << "Student ID: " << id << endl;
         cout << "Name: " << name << endl;
-        cout << "Marks:" << endl;
-        for (const auto& subject : marks) {
-            cout << "  " << subject.first << ": " << subject.second << endl;
-        }
+        cout << "Math: " << (mathScore != -1 ? to_string(mathScore) : "Not Assigned") << endl;
+        cout << "Science: " << (scienceScore != -1 ? to_string(scienceScore) : "Not Assigned") << endl;
         cout << "Grade: " << grade << endl;
     }
 };
 
-// Function template to display a list of objects
-template <typename T>
-void displayList(const vector<shared_ptr<T>>& list) {
-    for (const auto& obj : list) {
-        obj->displayInfo();
-        utils::printLine();
-    }
-}
-
 // Main Function
-int main() {
-    try {
-        vector<shared_ptr<Person>> people; // List of students
+int main()
+{
+    try
+    {
+        // Create base class pointers pointing to derived class objects
+        Person *people[2]; // Array of base class pointers
+        people[0] = new Student(1, "Alice");
+        people[1] = new Student(2, "Bob");
 
-        // Add students
-        auto student1 = make_shared<Student>(1, "Alice");
-        auto student2 = make_shared<Student>(2, "Bob");
+        // Add marks using polymorphic calls
+        people[0]->addMarks(85, 92); // Polymorphic call to Student's addMarks()
+        people[1]->addMarks(72, 68); // Polymorphic call to Student's addMarks()
 
-        // Add marks
-        student1->addMarks("Math", 85);
-        student1->addMarks("Science", 92);
-
-        student2->addMarks("Math", 72);
-        student2->addMarks("Science", 68);
-
-        // Add students to list
-        people.push_back(student1);
-        people.push_back(student2);
-
-        // Display all students
+        // Display details of all persons
         utils::printLine('=', 50);
-        cout << "Student Details:\n";
+        cout << "Student Details (Polymorphism Example):\n";
         utils::printLine('=', 50);
-        displayList(people);
 
-    } catch (const exception& e) {
+        for (int i = 0; i < 2; ++i)
+        {
+            people[i]->displayInfo(); // Polymorphic call to displayInfo()
+            utils::printLine();
+        }
+
+        // Clean up memory
+        for (int i = 0; i < 2; ++i)
+        {
+            delete people[i];
+        }
+    }
+    catch (const exception &e)
+    {
         cerr << "Error: " << e.what() << endl;
     }
 
     return 0;
 }
-
-
